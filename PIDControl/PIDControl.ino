@@ -6,6 +6,8 @@ Adafruit_DCMotor *motor = AFMS.getMotor(1);
 
 // Declaration of the sensor pin
 const int sensorPin = A1;
+const int tolerance = 10;
+
 // Angle of sections
 const int angle = 9;
 
@@ -19,7 +21,7 @@ long previousMillis = 0;
 long intervalWait = 3;
 
 // Initiates error and counter
-int error = 90;
+int error = 360;
 int counter = 0;
 
 void setup() {
@@ -29,13 +31,14 @@ void setup() {
   
   motor->setSpeed(200);
   motor->run(FORWARD);
-//  motor->run(RELEASE);
- 
+  
   k = 200/180.0;
 }
 
 void loop() {
+  sensorData1 = analogRead(sensorPin);
   positiveError();
+
   noError();
   negativeError();
   delay(10000);
@@ -46,21 +49,23 @@ void positiveError(){
   
   while (error>0){
     unsigned long currentMillis = millis();
-    
-    sensorData1 = analogRead(sensorPin);
-    
+        
     if (currentMillis - previousMillis > intervalWait) {
       previousMillis = currentMillis;
       sensorData2 = analogRead(sensorPin);
     }
       
-    if (sensorData1 < sensorData2 || sensorData1 > sensorData2) {
+    if (sensorData2 < sensorData1 +tolerance || sensorData1 > sensorData2 - tolerance) {
       error = error - angle;
+      Serial.println(sensorData1);
+      Serial.println(sensorData2);
+      sensorData1 = sensorData2;
       counter ++;
       motor->setSpeed(k*error);
     }
     printError();
-    delay(100);
+    delay(1000);
+
   }
 }
 
@@ -87,7 +92,7 @@ void negativeError(){
       sensorData2 = analogRead(sensorPin);
     }
       
-    if (sensorData1 < sensorData2 || sensorData1 > sensorData2) {
+    if (sensorData1 < sensorData2 - tolerance || sensorData1 > sensorData2 + tolerance) {
       error = error + angle;
       counter ++;
       motor->setSpeed(k*error);
