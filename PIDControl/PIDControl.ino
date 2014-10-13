@@ -43,44 +43,59 @@ void setup() {
 void loop() {
   // Read first analog sensor value  
   sensorData2 = analogRead(sensorPin);  
-  // Loop for positive error (1-10)  
+  // Calls two methods
+  positiveError();
+  negativeError();
+  // No-movement stage
+  myMotor->run(RELEASE);
+  // Speed set to zero
+  myMotor->setSpeed(0);
+  // Calls method
+  noError();
+  delay(150);                     
+}
+
+
+void positiveError(){
   while(error > 0){
-    time = millis();      
-    sensorData1 = analogRead(sensorPin); 
-    // If absolute variation is greater than the "threshold", then change and decrese the error     
-    if(abs(sensorData2-sensorData1)>tolerance){
-      // Decrease error      
-      error--;
-      delay(timer);
-    }
-    // Update integralState with new error term
-    integralState += error*dt;    
-    // Speed update
-    maxSpeed = sectorAngle*kP*error + kI*integralState + 50;
-    
-    // Testing boundary speed state
-    if(maxSpeed>255){
-      myMotor->setSpeed(255);
-    }
-    else{
-      myMotor->setSpeed(maxSpeed);
-    }
-    
-    // Prints to console results
-    Serial.print(millis());
-    Serial.print(",");
-    Serial.print(10-error);
-    Serial.print(",");
-    Serial.print(error);
-    Serial.print(",");
-    Serial.println(maxSpeed);
-    
-    // Updates sensorData
-    sensorData2 = sensorData1;
-    // Update time
-    pastTime = time;
+      time = millis();      
+      sensorData1 = analogRead(sensorPin); 
+      // If absolute variation is greater than the "threshold", then change and decrese the error     
+      if(abs(sensorData2-sensorData1)>tolerance){
+        // Decrease error      
+        error--;
+        delay(timer);
+      }
+      // Update integralState with new error term
+      integralState += error*dt;    
+      // Speed update
+      maxSpeed = sectorAngle*kP*error + kI*integralState + 50;
+      
+      // Testing boundary speed state
+      if(maxSpeed>255){
+        myMotor->setSpeed(255);
+      }
+      else{
+        myMotor->setSpeed(maxSpeed);
+      }
+      
+      // Prints to console results
+      Serial.print(millis());
+      Serial.print(",");
+      Serial.print(10-error);
+      Serial.print(",");
+      Serial.print(error);
+      Serial.print(",");
+      Serial.println(maxSpeed);
+      
+      // Updates sensorData
+      sensorData2 = sensorData1;
+      // Update time
+      pastTime = time;
   }
-  
+}
+
+void negativeError(){
   // Negative error case  
   while(error < 0){
     time = millis();
@@ -117,11 +132,9 @@ void loop() {
     Serial.print(",");
     Serial.println(maxSpeed);
   }
+}
 
-  // No-movement stage
-  myMotor->run(RELEASE);
-  // Speed set to zero
-  myMotor->setSpeed(0);
+void noError(){
   // Loops for error equal to zero
   while(error == 0){
     // Monitor sensor values
@@ -132,9 +145,6 @@ void loop() {
     if(abs(sensorData2-sensorData1)>tolerance){
       error = -1;
     }
-
   }
-  delay(150);                     
 }
-
 
